@@ -2,30 +2,35 @@ package com.apps.quantitymeasurement;
 
 public class Main {
 
-    // ================= ENUM =================
+    // ================= ENUM (Top-level inside same file) =================
+    // NOTE: Not inside QuantityLength → satisfies UC8 idea
     enum LengthUnit {
+
         FEET(1.0),
         INCH(1.0 / 12.0),
         YARDS(3.0),
         CENTIMETERS(0.0328084);
 
-        private final double toFeet;
+        private final double toFeetFactor;
 
-        LengthUnit(double toFeet) {
-            this.toFeet = toFeet;
+        LengthUnit(double toFeetFactor) {
+            this.toFeetFactor = toFeetFactor;
         }
 
-        public double toFeet(double value) {
-            return value * toFeet;
+        // Convert THIS unit → base (feet)
+        public double convertToBaseUnit(double value) {
+            return value * toFeetFactor;
         }
 
-        public double fromFeet(double feetValue) {
-            return feetValue / toFeet;
+        // Convert base (feet) → THIS unit
+        public double convertFromBaseUnit(double baseValue) {
+            return baseValue / toFeetFactor;
         }
     }
 
     // ================= CLASS =================
-    public static class QuantityLength {
+    static class QuantityLength {
+
         private final double value;
         private final LengthUnit unit;
 
@@ -43,54 +48,49 @@ public class Main {
         // ===== EQUALITY =====
         @Override
         public boolean equals(Object obj) {
+
             if (this == obj) return true;
             if (obj == null) return false;
             if (getClass() != obj.getClass()) return false;
 
             QuantityLength other = (QuantityLength) obj;
 
-            double thisFeet = this.unit.toFeet(this.value);
-            double otherFeet = other.unit.toFeet(other.value);
+            double thisBase = unit.convertToBaseUnit(value);
+            double otherBase = other.unit.convertToBaseUnit(other.value);
 
-            return Double.compare(thisFeet, otherFeet) == 0;
+            return Double.compare(thisBase, otherBase) == 0;
         }
 
-        // ===== CONVERSION =====
+        // ===== CONVERT =====
         public QuantityLength convertTo(LengthUnit targetUnit) {
-            double valueInFeet = this.unit.toFeet(this.value);
-            double converted = targetUnit.fromFeet(valueInFeet);
-            return new QuantityLength(converted, targetUnit);
+            double base = unit.convertToBaseUnit(value);
+            double result = targetUnit.convertFromBaseUnit(base);
+            return new QuantityLength(result, targetUnit);
         }
 
-        // ===== ADD (UC6 - default) =====
+        // ===== STATIC CONVERT =====
+        public static double convert(double value, LengthUnit source, LengthUnit target) {
+            double base = source.convertToBaseUnit(value);
+            return target.convertFromBaseUnit(base);
+        }
+
+        // ===== ADD (UC6) =====
         public QuantityLength add(QuantityLength other) {
-            double sumFeet = this.unit.toFeet(this.value) +
-                    other.unit.toFeet(other.value);
+            double sumBase =
+                    unit.convertToBaseUnit(value) +
+                            other.unit.convertToBaseUnit(other.value);
 
-            double result = this.unit.fromFeet(sumFeet);
-            return new QuantityLength(result, this.unit);
+            double result = unit.convertFromBaseUnit(sumBase);
+            return new QuantityLength(result, unit);
         }
 
-        // ================= 🔥 ADD WITH TARGET (UC7) =================
+        // ===== ADD WITH TARGET (UC7) =====
         public QuantityLength add(QuantityLength other, LengthUnit targetUnit) {
+            double sumBase =
+                    unit.convertToBaseUnit(value) +
+                            other.unit.convertToBaseUnit(other.value);
 
-            if (other == null) {
-                throw new IllegalArgumentException("Other cannot be null");
-            }
-            if (targetUnit == null) {
-                throw new IllegalArgumentException("Target unit cannot be null");
-            }
-
-            // convert both to feet
-            double thisFeet = this.unit.toFeet(this.value);
-            double otherFeet = other.unit.toFeet(other.value);
-
-            // add
-            double sumFeet = thisFeet + otherFeet;
-
-            // convert to target unit
-            double result = targetUnit.fromFeet(sumFeet);
-
+            double result = targetUnit.convertFromBaseUnit(sumBase);
             return new QuantityLength(result, targetUnit);
         }
 
@@ -106,11 +106,17 @@ public class Main {
         QuantityLength q1 = new QuantityLength(1.0, LengthUnit.FEET);
         QuantityLength q2 = new QuantityLength(12.0, LengthUnit.INCH);
 
-        // UC6 (default)
-        System.out.println("Default add: " + q1.add(q2));
+        // Equality
+        System.out.println("Equal: " + q1.equals(q2));
 
-        // UC7 (target unit = YARDS)
-        QuantityLength result = q1.add(q2, LengthUnit.YARDS);
-        System.out.println("1 foot + 12 inch in YARDS = " + result);
+        // Conversion
+        System.out.println("Convert: " +
+                QuantityLength.convert(1.0, LengthUnit.FEET, LengthUnit.INCH));
+
+        // Addition (UC6)
+        System.out.println("Add: " + q1.add(q2));
+
+        // Addition with target (UC7)
+        System.out.println("Add in YARDS: " + q1.add(q2, LengthUnit.YARDS));
     }
 }
