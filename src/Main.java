@@ -44,7 +44,6 @@ public class Main {
         // ===== EQUALITY =====
         @Override
         public boolean equals(Object obj) {
-
             if (this == obj) return true;
             if (obj == null) return false;
             if (getClass() != obj.getClass()) return false;
@@ -57,25 +56,37 @@ public class Main {
             return Double.compare(thisFeet, otherFeet) == 0;
         }
 
-        // ===== CONVERSION (INSTANCE METHOD) =====
+        // ===== CONVERSION =====
         public QuantityLength convertTo(LengthUnit targetUnit) {
             double valueInFeet = this.unit.toFeet(this.value);
             double converted = targetUnit.fromFeet(valueInFeet);
             return new QuantityLength(converted, targetUnit);
         }
 
-        // ===== STATIC CONVERSION =====
+        // ===== STATIC CONVERT =====
         public static double convert(double value, LengthUnit source, LengthUnit target) {
-
-            if (!Double.isFinite(value)) {
-                throw new IllegalArgumentException("Invalid value");
-            }
-            if (source == null || target == null) {
-                throw new IllegalArgumentException("Unit cannot be null");
-            }
-
             double valueInFeet = source.toFeet(value);
             return target.fromFeet(valueInFeet);
+        }
+
+        // ================= 🔥 ADD METHOD (UC6) =================
+        public QuantityLength add(QuantityLength other) {
+
+            if (other == null) {
+                throw new IllegalArgumentException("Other value cannot be null");
+            }
+
+            // convert both to feet
+            double thisFeet = this.unit.toFeet(this.value);
+            double otherFeet = other.unit.toFeet(other.value);
+
+            // add
+            double sumFeet = thisFeet + otherFeet;
+
+            // convert result to unit of FIRST operand
+            double result = this.unit.fromFeet(sumFeet);
+
+            return new QuantityLength(result, this.unit);
         }
 
         @Override
@@ -84,36 +95,28 @@ public class Main {
         }
     }
 
-    // ================= DEMO METHODS =================
-
-    // Overloaded Method 1
-    public static void demonstrateLengthConversion(double value, LengthUnit from, LengthUnit to) {
-        double result = QuantityLength.convert(value, from, to);
-        System.out.println("convert(" + value + ", " + from + ", " + to + ") = " + result);
-    }
-
-    // Overloaded Method 2
-    public static void demonstrateLengthConversion(QuantityLength q, LengthUnit to) {
-        QuantityLength result = q.convertTo(to);
-        System.out.println(q + " → " + result);
-    }
-
     // ================= MAIN =================
     public static void main(String[] args) {
 
-        // Basic conversions
-        demonstrateLengthConversion(1.0, LengthUnit.FEET, LengthUnit.INCH);
-        demonstrateLengthConversion(3.0, LengthUnit.YARDS, LengthUnit.FEET);
-        demonstrateLengthConversion(36.0, LengthUnit.INCH, LengthUnit.YARDS);
-        demonstrateLengthConversion(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCH);
-
-        // Using object
-        QuantityLength q = new QuantityLength(2.0, LengthUnit.YARDS);
-        demonstrateLengthConversion(q, LengthUnit.INCH);
-
-        // Equality check
+        // Example 1: 1 foot + 12 inch = 2 feet
         QuantityLength q1 = new QuantityLength(1.0, LengthUnit.FEET);
         QuantityLength q2 = new QuantityLength(12.0, LengthUnit.INCH);
-        System.out.println("Equality: " + q1.equals(q2));
+
+        QuantityLength result1 = q1.add(q2);
+        System.out.println("1 foot + 12 inch = " + result1);
+
+        // Example 2: 1 yard + 3 feet = 2 yards
+        QuantityLength q3 = new QuantityLength(1.0, LengthUnit.YARDS);
+        QuantityLength q4 = new QuantityLength(3.0, LengthUnit.FEET);
+
+        QuantityLength result2 = q3.add(q4);
+        System.out.println("1 yard + 3 feet = " + result2);
+
+        // Example 3: 2 cm + 1 inch
+        QuantityLength q5 = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
+        QuantityLength q6 = new QuantityLength(1.0, LengthUnit.INCH);
+
+        QuantityLength result3 = q5.add(q6);
+        System.out.println("2 cm + 1 inch = " + result3);
     }
 }
