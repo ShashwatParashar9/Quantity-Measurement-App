@@ -36,7 +36,6 @@ public class Main {
             if (unit == null) {
                 throw new IllegalArgumentException("Unit cannot be null");
             }
-
             this.value = value;
             this.unit = unit;
         }
@@ -63,17 +62,23 @@ public class Main {
             return new QuantityLength(converted, targetUnit);
         }
 
-        // ===== STATIC CONVERT =====
-        public static double convert(double value, LengthUnit source, LengthUnit target) {
-            double valueInFeet = source.toFeet(value);
-            return target.fromFeet(valueInFeet);
+        // ===== ADD (UC6 - default) =====
+        public QuantityLength add(QuantityLength other) {
+            double sumFeet = this.unit.toFeet(this.value) +
+                    other.unit.toFeet(other.value);
+
+            double result = this.unit.fromFeet(sumFeet);
+            return new QuantityLength(result, this.unit);
         }
 
-        // ================= 🔥 ADD METHOD (UC6) =================
-        public QuantityLength add(QuantityLength other) {
+        // ================= 🔥 ADD WITH TARGET (UC7) =================
+        public QuantityLength add(QuantityLength other, LengthUnit targetUnit) {
 
             if (other == null) {
-                throw new IllegalArgumentException("Other value cannot be null");
+                throw new IllegalArgumentException("Other cannot be null");
+            }
+            if (targetUnit == null) {
+                throw new IllegalArgumentException("Target unit cannot be null");
             }
 
             // convert both to feet
@@ -83,10 +88,10 @@ public class Main {
             // add
             double sumFeet = thisFeet + otherFeet;
 
-            // convert result to unit of FIRST operand
-            double result = this.unit.fromFeet(sumFeet);
+            // convert to target unit
+            double result = targetUnit.fromFeet(sumFeet);
 
-            return new QuantityLength(result, this.unit);
+            return new QuantityLength(result, targetUnit);
         }
 
         @Override
@@ -98,25 +103,14 @@ public class Main {
     // ================= MAIN =================
     public static void main(String[] args) {
 
-        // Example 1: 1 foot + 12 inch = 2 feet
         QuantityLength q1 = new QuantityLength(1.0, LengthUnit.FEET);
         QuantityLength q2 = new QuantityLength(12.0, LengthUnit.INCH);
 
-        QuantityLength result1 = q1.add(q2);
-        System.out.println("1 foot + 12 inch = " + result1);
+        // UC6 (default)
+        System.out.println("Default add: " + q1.add(q2));
 
-        // Example 2: 1 yard + 3 feet = 2 yards
-        QuantityLength q3 = new QuantityLength(1.0, LengthUnit.YARDS);
-        QuantityLength q4 = new QuantityLength(3.0, LengthUnit.FEET);
-
-        QuantityLength result2 = q3.add(q4);
-        System.out.println("1 yard + 3 feet = " + result2);
-
-        // Example 3: 2 cm + 1 inch
-        QuantityLength q5 = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
-        QuantityLength q6 = new QuantityLength(1.0, LengthUnit.INCH);
-
-        QuantityLength result3 = q5.add(q6);
-        System.out.println("2 cm + 1 inch = " + result3);
+        // UC7 (target unit = YARDS)
+        QuantityLength result = q1.add(q2, LengthUnit.YARDS);
+        System.out.println("1 foot + 12 inch in YARDS = " + result);
     }
 }
