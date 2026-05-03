@@ -170,4 +170,3 @@ public class QuantityMeasurementApp {
         demonstrateOperation("DIVIDE", ft10, new Quantity<>(0.0, LengthUnit.FEET), null);
     }
 }
-
